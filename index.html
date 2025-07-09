@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Crypto Wallet</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2775ff;
+            --secondary: #5e9bff;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --gray: #6c757d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 0;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        .wallet-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 25px 20px;
+            position: relative;
+            z-index: 1;
+            padding-top: max(25px, env(safe-area-inset-top));
+        }
+        
+        .wallet-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSg0NSkiPjxyZWN0IHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3QgZmlsbD0idXJsKCNwYXR0ZXJuKSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIvPjwvc3ZnPg==');
+            z-index: -1;
+            opacity: 0.5;
+        }
+        
+        .wallet-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .secret-balance-btn {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 40px;
+            height: 40px;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .wallet-title h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-left: 40px;
+        }
+        
+        .wallet-icon {
+            background: rgba(255, 255, 255, 0.2);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .balance-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: var(--primary);
+        }
+        
+        .balance-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .balance-amount {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+        }
+        
+        .balance-currency {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-left: 5px;
+            color: var(--gray);
+        }
+        
+        .balance-change {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: var(--success);
+        }
+        
+        .balance-change.negative {
+            color: var(--danger);
+        }
+        
+        .actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 0 20px 20px;
+        }
+        
+        .action-btn {
+            background: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .action-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .action-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(39, 117, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            color: var(--primary);
+            font-size: 1rem;
+        }
+        
+        .action-label {
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: var(--dark);
+            text-align: center;
+        }
+        
+        .assets {
+            padding: 0 20px 20px;
+        }
+        
+        .assets-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .assets-header h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .assets-header a {
+            font-size: 0.85rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .asset-list {
+            list-style: none;
+        }
+        
+        .asset-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .asset-item:last-child {
+            border-bottom: none;
+        }
+        
+        .asset-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .asset-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f5f7fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: var(--primary);
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        
+        .asset-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .asset-amount {
+            text-align: right;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+        
+        .asset-balance {
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .asset-value {
+            font-size: 0.85rem;
+            color: var(--gray);
+            white-space: nowrap;
+        }
+        
+        .transaction-history {
+            padding: 20px;
+            background: #f9fafc;
+            border-top: 1px solid #eee;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+        
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+        
+        .transaction-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(39, 117, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+        
+        .transaction-details {
+            min-width: 0;
+        }
+        
+        .transaction-details h4 {
+            font-weight: 500;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .transaction-details p {
+            font-size: 0.8rem;
+            color: var(--gray);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .transaction-amount {
+            font-weight: 600;
+            text-align: right;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+        
+        .transaction-amount.positive {
+            color: var(--success);
+        }
+        
+        .transaction-amount.negative {
+            color: var(--danger);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+        }
+        
+        .qr-code {
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .qr-code img {
+            width: 180px;
+            height: 180px;
+            max-width: 100%;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+            transform: translateY(20px);
+            transition: transform 0.3s;
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h3 {
+            font-weight: 600;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+            padding: 5px;
+        }
+        
+        .wallet-address {
+            background: #f5f7fa;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            margin: 15px 0;
+            position: relative;
+        }
+        
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn:active {
+            background: var(--secondary);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--gray);
+            position: relative;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .currency-selector {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        
+        .currency-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #f5f7fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: var(--primary);
+        }
+        
+        .currency-details {
+            flex: 1;
+        }
+        
+        .currency-name {
+            font-weight: 500;
+        }
+        
+        .currency-balance {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+        
+        .network-fee {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+        
+        .fee-label {
+            color: var(--gray);
+        }
+        
+        .fee-amount {
+            font-weight: 500;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .notification.show {
+            opacity: 1;
+        }
+        
+        .secret-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .secret-modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .secret-content {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            width: 90%;
+            max-width: 300px;
+            text-align: center;
+        }
+        
+        .secret-content h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        
+        .secret-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .secret-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="wallet-header">
+            <div class="wallet-title">
+                <button class="secret-balance-btn" id="secret-balance-btn"></button>
+                <h1>Мой кошелек</h1>
+                <div class="wallet-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+            </div>
+            
+            <div class="balance-card">
+                <div class="balance-label">Общий баланс</div>
+                <div class="balance-amount" id="total-balance">12,458.36 <span class="balance-currency">USD</span></div>
+                <div class="balance-change">
+                    <i class="fas fa-caret-up"></i> $245.32 (2.01%) сегодня
+                </div>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <div class="action-btn" id="receive-btn">
+                <div class="action-icon">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <span class="action-label">Получить</span>
+            </div>
+            
+            <div class="action-btn" id="send-btn">
+                <div class="action-icon">
+                    <i class="fas fa-paper-plane"></i>
+                </div>
+                <span class="action-label">Отправить</span>
+            </div>
+            
+            <div class="action-btn" id="swap-btn">
+                <div class="action-icon">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <span class="action-label">Обмен</span>
+            </div>
+            
+            <div class="action-btn" id="buy-btn">
+                <div class="action-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <span class="action-label">Купить</span>
+            </div>
+        </div>
+        
+        <div class="assets">
+            <div class="assets-header">
+                <h2>Мои активы</h2>
+                <a href="#" id="view-all">Все</a>
+            </div>
+            
+            <ul class="asset-list" id="asset-list">
+                <li class="asset-item" data-currency="btc">
+                    <div class="asset-info">
+                        <div class="asset-icon" style="background: rgba(247, 147, 26, 0.1); color: #f7931a;">
+                            <i class="fab fa-bitcoin"></i>
+                        </div>
+                        <div>
+                            <div class="asset-name">Bitcoin</div>
+                            <div class="asset-value">BTC</div>
+                        </div>
+                    </div>
+                    <div class="asset-amount">
+                        <div class="asset-balance" id="btc-balance">0.0425 BTC</div>
+                        <div class="asset-value" id="btc-value">$1,245.36</div>
+                    </div>
+                </li>
+                
+                <li class="asset-item" data-currency="eth">
+                    <div class="asset-info">
+                        <div class="asset-icon" style="background: rgba(78, 56, 156, 0.1); color: #4e389c;">
+                            <i class="fab fa-ethereum"></i>
+                        </div>
+                        <div>
+                            <div class="asset-name">Ethereum</div>
+                            <div class="asset-value">ETH</div>
+                        </div>
+                    </div>
+                    <div class="asset-amount">
+                        <div class="asset-balance" id="eth-balance">1.24 ETH</div>
+                        <div class="asset-value" id="eth-value">$2,458.75</div>
+                    </div>
+                </li>
+                
+                <li class="asset-item" data-currency="usdt">
+                    <div class="asset-info">
+                        <div class="asset-icon" style="background: rgba(38, 161, 123, 0.1); color: #26a17b;">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div>
+                            <div class="asset-name">Tether</div>
+                            <div class="asset-value">USDT</div>
+                        </div>
+                    </div>
+                    <div class="asset-amount">
+                        <div class="asset-balance" id="usdt-balance">8,754.00 USDT</div>
+                        <div class="asset-value" id="usdt-value">$8,754.00</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="transaction-history">
+            <div class="assets-header">
+                <h2>Последние операции</h2>
+                <a href="#" id="view-all-tx">Все</a>
+            </div>
+            
+            <ul class="asset-list" id="transaction-list">
+                <li class="transaction-item">
+                    <div class="transaction-info">
+                        <div class="transaction-icon" style="color: var(--success); background: rgba(40, 167, 69, 0.1);">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <div class="transaction-details">
+                            <h4>Получение BTC</h4>
+                            <p>Сегодня, 14:32</p>
+                        </div>
+                    </div>
+                    <div class="transaction-amount positive">
+                        +0.015 BTC
+                    </div>
+                </li>
+                
+                <li class="transaction-item">
+                    <div class="transaction-info">
+                        <div class="transaction-icon" style="color: var(--danger); background: rgba(220, 53, 69, 0.1);">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <div class="transaction-details">
+                            <h4>Отправка ETH</h4>
+                            <p>Вчера, 09:45</p>
+                        </div>
+                    </div>
+                    <div class="transaction-amount negative">
+                        -0.42 ETH
+                    </div>
+                </li>
+                
+                <li class="transaction-item">
+                    <div class="transaction-info">
+                        <div class="transaction-icon" style="color: var(--primary); background: rgba(39, 117, 255, 0.1);">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="transaction-details">
+                            <h4>Обмен USDT/BTC</h4>
+                            <p>3 дня назад</p>
+                        </div>
+                    </div>
+                    <div class="transaction-amount positive">
+                        +0.0025 BTC
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Модальное окно получения -->
+    <div class="modal" id="receive-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Получить криптовалюту</h3>
+                <button class="close-modal" id="close-receive">&times;</button>
+            </div>
+            
+            <div style="text-align: center;">
+                <div class="qr-code">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0x71C7656EC7ab88b098defB751B7401B5f6d8976F" alt="QR Code">
+                </div>
+                
+                <p style="margin-top: 15px; font-weight: 500;">BTC Адрес</p>
+                <div class="wallet-address">
+                    0x71C7656EC7ab88b098defB751B7401B5f6d8976F
+                </div>
+                
+                <button class="btn" id="copy-address">
+                    <i class="fas fa-copy"></i> Копировать адрес
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно отправки -->
+    <div class="modal" id="send-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Отправить криптовалюту</h3>
+                <button class="close-modal" id="close-send">&times;</button>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="crypto">Криптовалюта</div>
+                <div class="tab" data-tab="contact">Контакты</div>
+            </div>
+            
+            <div class="tab-content active" id="crypto-tab">
+                <div class="form-group">
+                    <label for="send-currency">Выберите валюту</label>
+                    <div class="currency-selector" id="send-currency-selector">
+                        <div class="currency-icon">
+                            <i class="fab fa-bitcoin"></i>
+                        </div>
+                        <div class="currency-details">
+                            <div class="currency-name">Bitcoin (BTC)</div>
+                            <div class="currency-balance">Доступно: <span id="send-available">0.0425</span> BTC</div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="send-address">Адрес получателя</label>
+                    <input type="text" id="send-address" class="form-control" placeholder="Введите адрес кошелька">
+                </div>
+                
+                <div class="form-group">
+                    <label for="send-amount">Сумма</label>
+                    <input type="number" id="send-amount" class="form-control" placeholder="0.00" step="0.0001" min="0">
+                </div>
+                
+                <div class="network-fee">
+                    <span class="fee-label">Комиссия сети</span>
+                    <span class="fee-amount">0.00012 BTC (~$4.32)</span>
+                </div>
+                
+                <button class="btn" id="confirm-send">
+                    <i class="fas fa-paper-plane"></i> Отправить
+                </button>
+            </div>
+            
+            <div class="tab-content" id="contact-tab">
+                <div class="empty-state">
+                    <i class="fas fa-address-book" style="font-size: 2rem; color: var(--gray); margin-bottom: 15px;"></i>
+                    <p>У вас нет сохраненных контактов</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно обмена -->
+    <div class="modal" id="swap-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Обмен криптовалюты</h3>
+                <button class="close-modal" id="close-swap">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Отдаете</label>
+                <div class="currency-selector" id="from-currency">
+                    <div class="currency-icon">
+                        <i class="fab fa-ethereum"></i>
+                    </div>
+                    <div class="currency-details">
+                        <div class="currency-name">Ethereum (ETH)</div>
+                        <div class="currency-balance">Доступно: <span id="swap-available">1.24</span> ETH</div>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin: 15px 0;">
+                <i class="fas fa-exchange-alt" style="color: var(--primary);"></i>
+            </div>
+            
+            <div class="form-group">
+                <label>Получаете</label>
+                <div class="currency-selector" id="to-currency">
+                    <div class="currency-icon">
+                        <i class="fab fa-bitcoin"></i>
+                    </div>
+                    <div class="currency-details">
+                        <div class="currency-name">Bitcoin (BTC)</div>
+                        <div class="currency-balance">Курс: 1 ETH = 0.062 BTC</div>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="swap-amount">Сумма обмена</label>
+                <input type="number" id="swap-amount" class="form-control" placeholder="0.00" step="0.01" min="0">
+            </div>
+            
+            <div class="network-fee">
+                <span class="fee-label">Комиссия сети</span>
+                <span class="fee-amount">0.0012 ETH (~$3.24)</span>
+            </div>
+            
+            <button class="btn" id="confirm-swap">
+                <i class="fas fa-exchange-alt"></i> Обменять
+            </button>
+        </div>
+    </div>
+    
+    <!-- Модальное окно покупки -->
+    <div class="modal" id="buy-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Купить криптовалюту</h3>
+                <button class="close-modal" id="close-buy">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="buy-currency">Выберите валюту</label>
+                <div class="currency-selector" id="buy-currency-selector">
+                    <div class="currency-icon">
+                        <i class="fab fa-bitcoin"></i>
+                    </div>
+                    <div class="currency-details">
+                        <div class="currency-name">Bitcoin (BTC)</div>
+                        <div class="currency-balance">Курс: 1 BTC = $42,350.00</div>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="buy-amount">Сумма в USD</label>
+                <input type="number" id="buy-amount" class="form-control" placeholder="0.00" step="1" min="0">
+            </div>
+            
+            <div class="form-group">
+                <label for="payment-method">Метод оплаты</label>
+                <select id="payment-method" class="form-control">
+                    <option value="card">Банковская карта</option>
+                    <option value="transfer">Банковский перевод</option>
+                </select>
+            </div>
+            
+            <div class="network-fee">
+                <span class="fee-label">Комиссия</span>
+                <span class="fee-amount">2.5% (~$5.00)</span>
+            </div>
+            
+            <button class="btn" id="confirm-buy">
+                <i class="fas fa-shopping-cart"></i> Купить
+            </button>
+        </div>
+    </div>
+    
+    <!-- Секретное модальное окно пополнения баланса -->
+    <div class="secret-modal" id="secret-modal">
+        <div class="secret-content">
+            <h3>Пополнить баланс</h3>
+            <input type="number" id="secret-amount" class="secret-input" placeholder="Сумма в USD" step="1" min="0">
+            <button class="secret-btn" id="secret-add-btn">Добавить</button>
+        </div>
+    </div>
+    
+    <!-- Уведомление -->
+    <div class="notification" id="notification"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Состояние кошелька
+            const walletState = {
+                totalBalance: 12458.36,
+                assets: {
+                    btc: { balance: 0.0425, value: 1245.36 },
+                    eth: { balance: 1.24, value: 2458.75 },
+                    usdt: { balance: 8754.00, value: 8754.00 }
+                },
+                exchangeRates: {
+                    btc: 29300, // 1 BTC = $29,300
+                    eth: 1980    // 1 ETH = $1,980
+                },
+                transactions: []
+            };
+            
+            // Элементы интерфейса
+            const totalBalanceEl = document.getElementById('total-balance');
+            const secretBalanceBtn = document.getElementById('secret-balance-btn');
+            const secretModal = document.getElementById('secret-modal');
+            const secretAddBtn = document.getElementById('secret-add-btn');
+            const secretAmount = document.getElementById('secret-amount');
+            
+            // Обновление баланса на экране
+            function updateBalance() {
+                // Форматируем числа с разделителями тысяч
+                const formatNumber = (num) => {
+                    return num.toLocaleString('en-US', {maximumFractionDigits: 2});
+                };
+                
+                // Общий баланс
+                totalBalanceEl.innerHTML = `${formatNumber(walletState.totalBalance)} <span class="balance-currency">USD</span>`;
+                
+                // Обновляем значения активов
+                document.getElementById('btc-balance').textContent = 
+                    `${walletState.assets.btc.balance.toFixed(4)} BTC`;
+                document.getElementById('btc-value').textContent = 
+                    `$${formatNumber(walletState.assets.btc.value)}`;
+                
+                document.getElementById('eth-balance').textContent = 
+                    `${walletState.assets.eth.balance.toFixed(2)} ETH`;
+                document.getElementById('eth-value').textContent = 
+                    `$${formatNumber(walletState.assets.eth.value)}`;
+                
+                document.getElementById('usdt-balance').textContent = 
+                    `${formatNumber(walletState.assets.usdt.balance)} USDT`;
+                document.getElementById('usdt-value').textContent = 
+                    `$${formatNumber(walletState.assets.usdt.value)}`;
+                
+                // Обновляем доступные суммы для отправки/обмена
+                document.getElementById('send-available').textContent = 
+                    walletState.assets.btc.balance.toFixed(4);
+                document.getElementById('swap-available').textContent = 
+                    walletState.assets.eth.balance.toFixed(2);
+            }
+            
+            // Добавление транзакции в историю
+            function addTransaction(type, amount, currency, details) {
+                const transaction = {
+                    id: Date.now(),
+                    type,
+                    amount,
+                    currency,
+                    details,
+                    date: new Date().toLocaleString()
+                };
+                
+                walletState.transactions.unshift(transaction);
+                
+                // Обновляем список транзакций в интерфейсе
+                updateTransactions();
+            }
+            
+            // Обновление списка транзакций
+            function updateTransactions() {
+                const transactionList = document.getElementById('transaction-list');
+                transactionList.innerHTML = '';
+                
+                // Ограничиваем показ 5 последними транзакциями
+                const recentTransactions = walletState.transactions.slice(0, 5);
+                
+                if (recentTransactions.length === 0) {
+                    transactionList.innerHTML = '<div class="empty-state">Нет операций</div>';
+                    return;
+                }
+                
+                recentTransactions.forEach(tx => {
+                    const txItem = document.createElement('li');
+                    txItem.className = 'transaction-item';
+                    
+                    let iconClass, iconBg, iconColor;
+                    
+                    if (tx.type === 'deposit') {
+                        iconClass = 'fas fa-arrow-down';
+                        iconBg = 'rgba(40, 167, 69, 0.1)';
+                        iconColor = 'var(--success)';
+                    } else if (tx.type === 'withdrawal') {
+                        iconClass = 'fas fa-arrow-up';
+                        iconBg = 'rgba(220, 53, 69, 0.1)';
+                        iconColor = 'var(--danger)';
+                    } else if (tx.type === 'exchange') {
+                        iconClass = 'fas fa-exchange-alt';
+                        iconBg = 'rgba(39, 117, 255, 0.1)';
+                        iconColor = 'var(--primary)';
+                    } else if (tx.type === 'purchase') {
+                        iconClass = 'fas fa-shopping-cart';
+                        iconBg = 'rgba(255, 193, 7, 0.1)';
+                        iconColor = 'var(--warning)';
+                    }
+                    
+                    txItem.innerHTML = `
+                        <div class="transaction-info">
+                            <div class="transaction-icon" style="color: ${iconColor}; background: ${iconBg};">
+                                <i class="${iconClass}"></i>
+                            </div>
+                            <div class="transaction-details">
+                                <h4>${tx.details}</h4>
+                                <p>${tx.date}</p>
+                            </div>
+                        </div>
+                        <div class="transaction-amount ${tx.type === 'withdrawal' ? 'negative' : 'positive'}">
+                            ${tx.type === 'withdrawal' ? '-' : '+'}${tx.amount} ${tx.currency}
+                        </div>
+                    `;
+                    
+                    transactionList.appendChild(txItem);
+                });
+            }
+            
+            // Секретная кнопка пополнения баланса
+            secretBalanceBtn.addEventListener('click', function() {
+                secretModal.classList.add('active');
+                secretAmount.focus();
+            });
+            
+            // Добавление средств (распределение USDT между криптовалютами неравномерно)
+            secretAddBtn.addEventListener('click', function() {
+                const amount = parseFloat(secretAmount.value);
+                
+                if (isNaN(amount)) {
+                    showNotification('Введите корректную сумму', 'error');
+                    return;
+                }
+                
+                if (amount <= 0) {
+                    showNotification('Сумма должна быть больше нуля', 'error');
+                    return;
+                }
+                
+                // Распределение USDT между криптовалютами (неравномерно)
+                const distribution = {
+                    btc: 0.5,  // 50% в BTC
+                    eth: 0.3,  // 30% в ETH
+                    usdt: 0.2  // 20% остается в USDT
+                };
+                
+                // Пополняем общий баланс
+                walletState.totalBalance += amount;
+                
+                // Распределяем добавленные средства между активами
+                const btcAmount = amount * distribution.btc;
+                const ethAmount = amount * distribution.eth;
+                const usdtAmount = amount * distribution.usdt;
+                
+                // BTC
+                walletState.assets.btc.value += btcAmount;
+                walletState.assets.btc.balance = walletState.assets.btc.value / walletState.exchangeRates.btc;
+                
+                // ETH
+                walletState.assets.eth.value += ethAmount;
+                walletState.assets.eth.balance = walletState.assets.eth.value / walletState.exchangeRates.eth;
+                
+                // USDT
+                walletState.assets.usdt.value += usdtAmount;
+                walletState.assets.usdt.balance = walletState.assets.usdt.value;
+                
+                // Добавляем транзакцию
+                addTransaction('deposit', amount.toFixed(2), 'USD', 'Пополнение баланса');
+                
+                // Обновляем интерфейс
+                updateBalance();
+                
+                // Показываем уведомление с деталями распределения
+                showNotification(
+                    `Баланс пополнен на $${amount.toLocaleString('en-US', {maximumFractionDigits: 2})}\n` +
+                    `Распределено: BTC ${btcAmount.toFixed(2)} (${(distribution.btc*100).toFixed(0)}%), ` +
+                    `ETH ${ethAmount.toFixed(2)} (${(distribution.eth*100).toFixed(0)}%), ` +
+                    `USDT ${usdtAmount.toFixed(2)} (${(distribution.usdt*100).toFixed(0)}%)`
+                );
+                
+                // Закрываем модальное окно и очищаем поле ввода
+                secretModal.classList.remove('active');
+                secretAmount.value = '';
+            });
+            
+            // Закрытие секретного модального окна
+            secretModal.addEventListener('click', function(e) {
+                if (e.target === secretModal) {
+                    secretModal.classList.remove('active');
+                }
+            });
+            
+            // Остальной функционал
+            const receiveBtn = document.getElementById('receive-btn');
+            const sendBtn = document.getElementById('send-btn');
+            const swapBtn = document.getElementById('swap-btn');
+            const buyBtn = document.getElementById('buy-btn');
+            
+            const receiveModal = document.getElementById('receive-modal');
+            const sendModal = document.getElementById('send-modal');
+            const swapModal = document.getElementById('swap-modal');
+            const buyModal = document.getElementById('buy-modal');
+            
+            const closeReceive = document.getElementById('close-receive');
+            const closeSend = document.getElementById('close-send');
+            const closeSwap = document.getElementById('close-swap');
+            const closeBuy = document.getElementById('close-buy');
+            
+            const copyAddressBtn = document.getElementById('copy-address');
+            const confirmSendBtn = document.getElementById('confirm-send');
+            const confirmSwapBtn = document.getElementById('confirm-swap');
+            const confirmBuyBtn = document.getElementById('confirm-buy');
+            
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            const notification = document.getElementById('notification');
+            
+            // Открытие модальных окон
+            receiveBtn.addEventListener('click', () => receiveModal.classList.add('active'));
+            sendBtn.addEventListener('click', () => sendModal.classList.add('active'));
+            swapBtn.addEventListener('click', () => swapModal.classList.add('active'));
+            buyBtn.addEventListener('click', () => buyModal.classList.add('active'));
+            
+            // Закрытие модальных окон
+            closeReceive.addEventListener('click', () => receiveModal.classList.remove('active'));
+            closeSend.addEventListener('click', () => sendModal.classList.remove('active'));
+            closeSwap.addEventListener('click', () => swapModal.classList.remove('active'));
+            closeBuy.addEventListener('click', () => buyModal.classList.remove('active'));
+            
+            // Закрытие при клике вне модального окна
+            [receiveModal, sendModal, swapModal, buyModal, secretModal].forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
+            });
+            
+            // Переключение табов
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    this.classList.add('active');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+            
+            // Копирование адреса
+            copyAddressBtn.addEventListener('click', function() {
+                const address = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
+                navigator.clipboard.writeText(address).then(() => {
+                    showNotification('Адрес скопирован в буфер обмена');
+                }).catch(err => {
+                    showNotification('Не удалось скопировать адрес', 'error');
+                    console.error('Ошибка копирования:', err);
+                });
+            });
+            
+            // Подтверждение отправки
+            confirmSendBtn.addEventListener('click', function() {
+                const amount = parseFloat(document.getElementById('send-amount').value);
+                const address = document.getElementById('send-address').value.trim();
+                
+                if (!address) {
+                    showNotification('Введите адрес получателя', 'error');
+                    return;
+                }
+                
+                if (!amount || amount <= 0) {
+                    showNotification('Введите корректную сумму', 'error');
+                    return;
+                }
+                
+                if (amount > walletState.assets.btc.balance) {
+                    showNotification('Недостаточно средств', 'error');
+                    return;
+                }
+                
+                // Обновляем баланс
+                walletState.assets.btc.balance -= amount;
+                walletState.assets.btc.value = walletState.assets.btc.balance * walletState.exchangeRates.btc;
+                walletState.totalBalance = walletState.assets.btc.value + walletState.assets.eth.value + walletState.assets.usdt.value;
+                
+                // Добавляем транзакцию
+                addTransaction('withdrawal', amount.toFixed(4), 'BTC', 'Отправка BTC');
+                
+                // Обновляем интерфейс
+                updateBalance();
+                
+                showNotification(`Успешно отправлено ${amount.toFixed(4)} BTC`);
+                sendModal.classList.remove('active');
+                document.getElementById('send-amount').value = '';
+                document.getElementById('send-address').value = '';
+            });
+            
+            // Подтверждение обмена
+            confirmSwapBtn.addEventListener('click', function() {
+                const amount = parseFloat(document.getElementById('swap-amount').value);
+                
+                if (!amount || amount <= 0) {
+                    showNotification('Введите корректную сумму', 'error');
+                    return;
+                }
+                
+                if (amount > walletState.assets.eth.balance) {
+                    showNotification('Недостаточно ETH для обмена', 'error');
+                    return;
+                }
+                
+                // Курс обмена: 1 ETH = 0.062 BTC
+                const exchangeRate = 0.062;
+                const receivedBtc = amount * exchangeRate;
+                const fee = 0.0012; // Комиссия сети
+                
+                // Обновляем балансы
+                walletState.assets.eth.balance -= amount;
+                walletState.assets.eth.value = walletState.assets.eth.balance * walletState.exchangeRates.eth;
+                
+                walletState.assets.btc.balance += receivedBtc;
+                walletState.assets.btc.value = walletState.assets.btc.balance * walletState.exchangeRates.btc;
+                
+                walletState.totalBalance = walletState.assets.btc.value + walletState.assets.eth.value + walletState.assets.usdt.value;
+                
+                // Добавляем транзакцию
+                addTransaction('exchange', receivedBtc.toFixed(6), 'BTC', `Обмен ${amount.toFixed(2)} ETH на BTC`);
+                
+                // Обновляем интерфейс
+                updateBalance();
+                
+                showNotification(`Успешно обменено ${amount.toFixed(2)} ETH на ${receivedBtc.toFixed(6)} BTC`);
+                swapModal.classList.remove('active');
+                document.getElementById('swap-amount').value = '';
+            });
+            
+            // Подтверждение покупки
+            confirmBuyBtn.addEventListener('click', function() {
+                const amount = parseFloat(document.getElementById('buy-amount').value);
+                
+                if (!amount || amount <= 0) {
+                    showNotification('Введите корректную сумму', 'error');
+                    return;
+                }
+                
+                // Комиссия 2.5%
+                const fee = amount * 0.025;
+                const amountAfterFee = amount - fee;
+                
+                // Курс: 1 BTC = $42,350.00
+                const btcReceived = amountAfterFee / 42350;
+                
+                // Обновляем балансы
+                walletState.assets.btc.balance += btcReceived;
+                walletState.assets.btc.value = walletState.assets.btc.balance * walletState.exchangeRates.btc;
+                walletState.totalBalance = walletState.assets.btc.value + walletState.assets.eth.value + walletState.assets.usdt.value;
+                
+                // Добавляем транзакцию
+                addTransaction('purchase', btcReceived.toFixed(6), 'BTC', `Покупка BTC за $${amount.toFixed(2)}`);
+                
+                // Обновляем интерфейс
+                updateBalance();
+                
+                showNotification(`Успешная покупка ${btcReceived.toFixed(6)} BTC за $${amount.toLocaleString('en-US', {maximumFractionDigits: 2})}`);
+                buyModal.classList.remove('active');
+                document.getElementById('buy-amount').value = '';
+            });
+            
+            // Просмотр всех активов
+            document.getElementById('view-all').addEventListener('click', function(e) {
+                e.preventDefault();
+                showNotification('Просмотр всех активов');
+            });
+            
+            // Просмотр всех транзакций
+            document.getElementById('view-all-tx').addEventListener('click', function(e) {
+                e.preventDefault();
+                showNotification('Просмотр всех транзакций');
+            });
+            
+            // Функция показа уведомления
+            function showNotification(message, type = 'success') {
+                notification.textContent = message;
+                notification.style.background = type === 'error' ? 'var(--danger)' : 'var(--dark)';
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Инициализация интерфейса
+            updateBalance();
+            updateTransactions();
+            
+            // Добавляем начальные транзакции
+            addTransaction('deposit', '0.0150', 'BTC', 'Получение BTC');
+            addTransaction('withdrawal', '0.4200', 'ETH', 'Отправка ETH');
+            addTransaction('exchange', '0.0025', 'BTC', 'Обмен USDT/BTC');
+        });
+    </script>
+</body>
+</html>
