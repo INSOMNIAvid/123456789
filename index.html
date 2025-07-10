@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Crypto Wallet</title>
-    <link rel="manifest" href="/manifest.json">
+    
+    <!-- PWA Metadata -->
+    <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22My%20Crypto%20Wallet%22%2C%22short_name%22%3A%22CryptoWallet%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%232775ff%22%2C%22description%22%3A%22%D0%9F%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%B4%D0%BB%D1%8F%20%D1%83%D0%BF%D1%80%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F%20%D0%BA%D1%80%D0%B8%D0%BF%D1%82%D0%BE%D0%B2%D0%B0%D0%BB%D1%8E%D1%82%D0%BD%D1%8B%D0%BC%20%D0%BA%D0%BE%D1%88%D0%B5%D0%BB%D1%8C%D0%BA%D0%BE%D0%BC%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fvia.placeholder.com%2F192x192%2F2775ff%2Fffffff%3Ftext%3DCW%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Fvia.placeholder.com%2F512x512%2F2775ff%2Fffffff%3Ftext%3DCW%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
     <meta name="theme-color" content="#2775ff">
-    <link rel="apple-touch-icon" href="/icon-192x192.png">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192x192/2775ff/ffffff?text=CW">
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -657,6 +661,23 @@
             cursor: pointer;
             width: 100%;
         }
+
+        /* Install button for PWA */
+        .install-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -1016,12 +1037,70 @@
     
     <!-- Уведомление -->
     <div class="notification" id="notification"></div>
+
+    <!-- PWA Install Button -->
+    <button class="install-btn" id="installBtn" style="display: none;">
+        <i class="fas fa-download"></i> Установить
+    </button>
     
     <script>
-        // Регистрация Service Worker для PWA
+        // PWA Installation
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    installBtn.style.display = 'none';
+                }
+                deferredPrompt = null;
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installBtn.style.display = 'none';
+            console.log('PWA was installed');
+        });
+
+        // Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
+                const swUrl = URL.createObjectURL(
+                    new Blob([
+                        `const CACHE_NAME = 'crypto-wallet-v1';
+                        const ASSETS_TO_CACHE = [
+                            '/',
+                            '/index.html',
+                            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+                            'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0x71C7656EC7ab88b098defB751B7401B5f6d8976F'
+                        ];
+
+                        self.addEventListener('install', (event) => {
+                            event.waitUntil(
+                                caches.open(CACHE_NAME)
+                                    .then((cache) => cache.addAll(ASSETS_TO_CACHE))
+                                    .then(() => self.skipWaiting())
+                            );
+                        });
+
+                        self.addEventListener('fetch', (event) => {
+                            event.respondWith(
+                                caches.match(event.request)
+                                    .then((response) => response || fetch(event.request))
+                            );
+                        });`
+                    ], { type: 'application/javascript' })
+                );
+
+                navigator.serviceWorker.register(swUrl)
                     .then(registration => {
                         console.log('ServiceWorker registration successful');
                     })
@@ -1030,35 +1109,6 @@
                     });
             });
         }
-
-        // Манифест для PWA (встроенный в страницу)
-        const manifest = {
-            "name": "My Crypto Wallet",
-            "short_name": "CryptoWallet",
-            "start_url": ".",
-            "display": "standalone",
-            "background_color": "#ffffff",
-            "theme_color": "#2775ff",
-            "description": "Приложение для управления криптовалютным кошельком",
-            "icons": [
-                {
-                    "src": "icon-192x192.png",
-                    "sizes": "192x192",
-                    "type": "image/png"
-                },
-                {
-                    "src": "icon-512x512.png",
-                    "sizes": "512x512",
-                    "type": "image/png"
-                }
-            ]
-        };
-
-        // Создаем ссылку на манифест динамически
-        const manifestLink = document.createElement('link');
-        manifestLink.rel = 'manifest';
-        manifestLink.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest));
-        document.head.appendChild(manifestLink);
 
         document.addEventListener('DOMContentLoaded', function() {
             // Состояние кошелька
@@ -1473,65 +1523,6 @@
             addTransaction('withdrawal', '0.4200', 'ETH', 'Отправка ETH');
             addTransaction('exchange', '0.0025', 'BTC', 'Обмен USDT/BTC');
         });
-    </script>
-
-    <script>
-        // Инлайн Service Worker для PWA
-        const swCode = `
-            const CACHE_NAME = 'crypto-wallet-v1';
-            const ASSETS_TO_CACHE = [
-                '/',
-                '/index.html',
-                '/styles.css',
-                '/script.js',
-                'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-                'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0x71C7656EC7ab88b098defB751B7401B5f6d8976F'
-            ];
-
-            self.addEventListener('install', (event) => {
-                event.waitUntil(
-                    caches.open(CACHE_NAME)
-                        .then((cache) => cache.addAll(ASSETS_TO_CACHE))
-                        .then(() => self.skipWaiting())
-                );
-            });
-
-            self.addEventListener('activate', (event) => {
-                event.waitUntil(
-                    caches.keys().then((cacheNames) => {
-                        return Promise.all(
-                            cacheNames.map((cacheName) => {
-                                if (cacheName !== CACHE_NAME) {
-                                    return caches.delete(cacheName);
-                                }
-                            })
-                        );
-                    })
-                );
-            });
-
-            self.addEventListener('fetch', (event) => {
-                event.respondWith(
-                    caches.match(event.request)
-                        .then((response) => response || fetch(event.request))
-                );
-            });
-        `;
-
-        // Создаем Blob из кода Service Worker
-        const blob = new Blob([swCode], { type: 'application/javascript' });
-        const swUrl = URL.createObjectURL(blob);
-
-        // Регистрируем Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register(swUrl)
-                .then(registration => {
-                    console.log('Service Worker зарегистрирован:', registration);
-                })
-                .catch(error => {
-                    console.log('Ошибка регистрации Service Worker:', error);
-                });
-        }
     </script>
 </body>
 </html>
